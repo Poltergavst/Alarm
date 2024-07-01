@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
@@ -11,6 +12,7 @@ public class AlarmPlayer : MonoBehaviour
     private bool _isActive;
 
     private AudioSource _alarm;
+    private WaitForEndOfFrame _wait;
 
     private void Awake()
     {
@@ -20,33 +22,26 @@ public class AlarmPlayer : MonoBehaviour
         _soundFadingSpeed = 0.3f;
 
         _alarm = GetComponent<AudioSource>();
-
         _alarm.volume = _minVolume;
 
-        _isActive = false;
-    }
+        _wait = new WaitForEndOfFrame();
 
-    private void Update()
-    {
-        if (_isActive == true)
-        {
-            AmplifySound();
-        }
-        else
-        {
-            AttenuateSound();
-        }
+        _isActive = false;
     }
 
     public void TurnOn()
     {
         _isActive = true;
         _alarm.Play();
+
+        StartCoroutine(ChangeSound());
     }
 
     public void TurnOff()
     {
         _isActive = false;
+
+        StartCoroutine(ChangeSound());
     }
 
     private void AmplifySound()
@@ -55,6 +50,10 @@ public class AlarmPlayer : MonoBehaviour
         {
             _alarm.volume = Mathf.MoveTowards(_alarm.volume, _maxVolume, _soundRaisingSpeed * Time.deltaTime);
         }
+        else
+        {
+            StopCoroutine(ChangeSound());
+        }    
     }
 
     private void AttenuateSound()
@@ -66,6 +65,25 @@ public class AlarmPlayer : MonoBehaviour
         else
         {
             _alarm.Stop();
+
+            StopCoroutine(ChangeSound());
+        }
+    }
+
+    private IEnumerator ChangeSound()
+    {
+        while (_alarm.isPlaying == true)
+        {
+            if (_isActive == true)
+            {
+                AmplifySound();
+            }
+            else
+            {
+                AttenuateSound();
+            }
+
+            yield return _wait;
         }
     }
 }

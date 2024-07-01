@@ -7,14 +7,14 @@ public class IntruderDetector : MonoBehaviour
 
     private void OnTriggerEnter(Collider intruder)
     {
-        if (intruder.GetComponent("Walker") == true)
+        if (intruder.TryGetComponent(out Walker _) == true)
         {
             _alarm.TurnOn();
         }
     }
     private void OnTriggerExit(Collider intruder)
     {
-        if (intruder.GetComponent("Walker") == true)
+        if (intruder.TryGetComponent(out Walker _) == true)
         {
             _alarm.TurnOff();
         }
