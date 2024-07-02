@@ -6,84 +6,55 @@ public class AlarmPlayer : MonoBehaviour
 {
     private float _maxVolume;
     private float _minVolume;
-    private float _soundRaisingSpeed;
-    private float _soundFadingSpeed;
-
-    private bool _isActive;
+    private float _soundChangingSpeed;
 
     private AudioSource _alarm;
-    private WaitForEndOfFrame _wait;
+    private Coroutine _soundChanger;
 
     private void Awake()
     {
         _maxVolume = 1.0f;
         _minVolume = 0f;
-        _soundRaisingSpeed = 0.1f;
-        _soundFadingSpeed = 0.3f;
+        _soundChangingSpeed = 0.3f;
 
         _alarm = GetComponent<AudioSource>();
         _alarm.volume = _minVolume;
-
-        _wait = new WaitForEndOfFrame();
-
-        _isActive = false;
     }
 
     public void TurnOn()
     {
-        _isActive = true;
         _alarm.Play();
 
-        StartCoroutine(ChangeSound());
+        if (_soundChanger != null) 
+        {
+            StopCoroutine(_soundChanger);
+        }
+
+        _soundChanger = StartCoroutine(ChangeSound(_maxVolume));
     }
 
     public void TurnOff()
     {
-        _isActive = false;
+        if (_soundChanger != null)
+        {
+            StopCoroutine(_soundChanger);
+        }
 
-        StartCoroutine(ChangeSound());
+        _soundChanger = StartCoroutine(ChangeSound(_minVolume));
     }
 
-    private void AmplifySound()
+    private IEnumerator ChangeSound(float targetVolume)
     {
-        if (_alarm.volume != _maxVolume) 
+        while (_alarm.volume != targetVolume)
         {
-            _alarm.volume = Mathf.MoveTowards(_alarm.volume, _maxVolume, _soundRaisingSpeed * Time.deltaTime);
-        }
-        else
-        {
-            StopCoroutine(ChangeSound());
-        }    
-    }
+            _alarm.volume = Mathf.MoveTowards(_alarm.volume, targetVolume, _soundChangingSpeed * Time.deltaTime);
 
-    private void AttenuateSound()
-    {
-        if (_alarm.volume != _minVolume)
-        {
-            _alarm.volume = Mathf.MoveTowards(_alarm.volume, _minVolume, _soundFadingSpeed * Time.deltaTime);
+            yield return null;
         }
-        else
+
+        if (_alarm.volume == _minVolume) 
         {
             _alarm.Stop();
-
-            StopCoroutine(ChangeSound());
-        }
-    }
-
-    private IEnumerator ChangeSound()
-    {
-        while (_alarm.isPlaying == true)
-        {
-            if (_isActive == true)
-            {
-                AmplifySound();
-            }
-            else
-            {
-                AttenuateSound();
-            }
-
-            yield return _wait;
         }
     }
 }
